@@ -1,0 +1,35 @@
+name = "foundation-bible-chat-proxy"
+main = "src/index.js"
+compatibility_date = "2026-07-19"
+compatibility_flags = ["nodejs_compat"]
+
+# Workers AI — used only for embeddings (semantic verse retrieval), not
+# generation. No separate signup, no separate API key: it's the same
+# Cloudflare account you're already deploying to, with its own free daily
+# allocation. This binding is REQUIRED for semantic retrieval; without it
+# the worker still works, it just falls back to the app's local
+# keyword-based candidates only (see src/embeddings.js).
+[ai]
+binding = "AI"
+
+# Required secret (never put this in a committed file):
+#   npx wrangler secret put ANTHROPIC_API_KEY
+
+# Required for both semantic retrieval AND the response cache — same KV
+# namespace serves both (different key prefixes), so you only need one.
+# Create it, then uncomment the block below with the printed id:
+#   npx wrangler kv namespace create RESPONSE_CACHE
+#
+[[kv_namespaces]]
+binding = "RESPONSE_CACHE"
+id = "49acc10bd1e14d2389e47e349b9c4c9e"
+
+# Required to call POST /admin/rebuild-embeddings (run once after deploy,
+# and again whenever shared/verses.json changes). Pick any random string:
+#   npx wrangler secret put ADMIN_KEY
+
+# Required for the new-signup email notification (POST /webhooks/new-signup,
+# called by a Supabase Database Webhook — see worker/README.md):
+#   npx wrangler secret put RESEND_API_KEY       # from resend.com, free tier
+#   npx wrangler secret put NOTIFY_EMAIL         # where signup emails go — your address
+#   npx wrangler secret put SIGNUP_WEBHOOK_SECRET  # any random string; also goes in the Supabase webhook's headers
