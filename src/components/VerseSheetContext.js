@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { Modal, View, Text, Pressable, ScrollView, StyleSheet, Share } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../theme/ThemeContext";
 import { VERSES, COMMENTARY, CROSS_REFS, lookupKJVVerse, getBibleOnlyExplanation } from "../data/bibleData";
 import { KEYS, getJSON, setJSON } from "../storage/storage";
@@ -112,7 +113,7 @@ function VerseSheetContent({ ref, text, tab, setTab, isHighlighted, isBookmarked
       <View style={s.sheet}>
         <View style={s.headerRow}>
           <Text style={s.refText}>{ref}</Text>
-          <Pressable onPress={closeSheet} hitSlop={10}><Text style={s.close}>✕</Text></Pressable>
+          <Pressable onPress={closeSheet} hitSlop={10}><Ionicons name="close" size={22} color={colors.textMuted} /></Pressable>
         </View>
         <ScrollView style={{ maxHeight: "70%" }}>
           <Text style={s.verseText}>{text}</Text>
@@ -203,7 +204,6 @@ function makeStyles(c, textScale) {
     sheet: { backgroundColor: c.bgElevated, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 20, maxHeight: "85%" },
     headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
     refText: { color: c.accent, fontWeight: "700", fontSize: 14 * textScale, textTransform: "uppercase", letterSpacing: 0.5 },
-    close: { color: c.textMuted, fontSize: 18 },
     verseText: { color: c.text, fontSize: 17 * textScale, lineHeight: 26 * textScale, marginBottom: 14 },
     pillRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
     pill: { borderWidth: 1, borderColor: c.border, backgroundColor: c.bgSunken, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14 },

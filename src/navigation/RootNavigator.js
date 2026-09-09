@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NavigationContainer, DefaultTheme, DarkTheme, DrawerActions, getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import { createDrawerNavigator, DrawerContentScrollView } from "@react-navigation/drawer";
@@ -44,7 +45,7 @@ function MenuButton({ navigation, colors }) {
       style={{ paddingHorizontal: 14 }}
       accessibilityLabel="Open menu"
     >
-      <Text style={{ color: colors.accent, fontSize: 20, fontWeight: "700" }}>☰</Text>
+      <Ionicons name="menu" size={24} color={colors.accent} />
     </Pressable>
   );
 }

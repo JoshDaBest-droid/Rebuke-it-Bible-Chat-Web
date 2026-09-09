@@ -47,6 +47,23 @@ in `shared/verses.json`). If you skip this step, the worker still works —
 it just answers using only the app's local keyword-based candidates until
 you run it.
 
+### Account deletion (required for App Store submission)
+
+Apple requires any app with account creation to also offer in-app account
+deletion (Guideline 5.1.1(v)). `POST /account/delete` handles this — it
+verifies the caller's Supabase session token, then deletes their
+`auth.users` row via Supabase's Admin API, which cascades (via each
+table's `on delete cascade`) to remove everything they've ever synced.
+
+```bash
+npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+```
+
+Get this value from the Supabase dashboard → **Project Settings → API →
+service_role** (the *secret* key, not the anon/publishable one — never put
+this in a committed file or in the app itself). `SUPABASE_URL` is already
+set as a plain (non-secret) var in `wrangler.toml`.
+
 ### Signup notification email (optional)
 
 Sends you one email every time someone creates an account, via a Supabase

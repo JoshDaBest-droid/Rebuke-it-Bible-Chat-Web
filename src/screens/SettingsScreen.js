@@ -14,7 +14,7 @@ const TEXT_SCALES = [
 
 export default function SettingsScreen({ navigation }) {
   const { colors, textScale, pack, mode, contrast, reducedMotion, fontColor, setThemePack, setMode, setTextScale, setContrast, setReducedMotion, setFontColor } = useTheme();
-  const { user, openAuthModal, signOut, signOutAndClearDevice } = useAuth();
+  const { user, openAuthModal, signOut, signOutAndClearDevice, deleteAccount } = useAuth();
   const s = useMemo(() => makeStyles(colors, textScale), [colors, textScale]);
 
   const confirmSignOut = () => {
@@ -34,6 +34,28 @@ export default function SettingsScreen({ navigation }) {
       [
         { text: "Cancel", style: "cancel" },
         { text: "Sign Out & Clear", style: "destructive", onPress: signOutAndClearDevice },
+      ]
+    );
+  };
+
+  const confirmDeleteAccount = () => {
+    Alert.alert(
+      "Delete account",
+      "This permanently deletes your account and everything synced to it — journal, prayers, highlights, bookmarks, plan progress, and Guide history. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete Account",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteAccount();
+              Alert.alert("Account deleted", "Your account and synced data have been permanently deleted.");
+            } catch (e) {
+              Alert.alert("Couldn't delete account", e.message || "Something went wrong — please try again.");
+            }
+          },
+        },
       ]
     );
   };
@@ -65,6 +87,9 @@ export default function SettingsScreen({ navigation }) {
               </Pressable>
             </View>
             <Text style={s.mutedText}>Using a shared or borrowed device? "Sign Out & Clear This Device" also wipes your journal, prayers, and Guide history from it.</Text>
+            <Pressable style={[s.dangerBtn, s.deleteAccountBtn]} onPress={confirmDeleteAccount}>
+              <Text style={[s.dangerBtnText, s.deleteAccountBtnText]}>Delete Account</Text>
+            </Pressable>
           </>
         ) : (
           <>
@@ -166,6 +191,8 @@ function makeStyles(c, textScale) {
     bodyText: { color: c.textMuted, fontSize: 13 * textScale, lineHeight: 19 * textScale, marginBottom: 12 },
     btnRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },
     dangerBtn: { borderWidth: 1, borderColor: c.danger, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14, alignSelf: "flex-start" },
+    deleteAccountBtn: { marginTop: 4, backgroundColor: c.danger, borderColor: c.danger },
+    deleteAccountBtnText: { color: "#fff" },
     dangerBtnText: { color: c.danger, fontSize: 13 * textScale },
     primaryBtn: { backgroundColor: c.accent, borderRadius: 999, paddingVertical: 10, paddingHorizontal: 16, alignSelf: "flex-start" },
     primaryBtnText: { color: c.accentContrast, fontWeight: "700", fontSize: 13 * textScale },

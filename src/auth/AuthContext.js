@@ -10,6 +10,7 @@ import { useTheme } from "../theme/ThemeContext";
 import { supabase } from "../supabase/client";
 import { setSyncUserId, hasAnyRemoteData, pullAllToLocal, pushAllFromLocal } from "../sync/sync";
 import { getJSON, KEYS, clearAllAppData } from "../storage/storage";
+import { PROXY_URL, APP_SHARED_SECRET } from "../chat/claudeClient";
 
 // Parses the tokens Supabase appends to ANY auth email's redirect link — password
 // reset ("type=recovery") and signup confirmation ("type=signup") both use this
@@ -242,6 +243,33 @@ export function AuthProvider({ children }) {
     setSyncVersion(v => v + 1);
   }, []);
 
+  // Permanently deletes the account itself (not just the local session) —
+  // required by Apple Guideline 5.1.1(v) for any app with account creation.
+  // The client can't do this directly (no client key can delete another
+  // auth.users row), so this calls the worker's /account/delete, which
+  // verifies the session token server-side and deletes via Supabase's
+  // Admin API. On success, everything synced to the account is gone too
+  // (every table cascades on user_id) — so this also clears local data and
+  // ends the session, exactly like signOutAndClearDevice.
+  const deleteAccount = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) throw new Error("Not signed in.");
+
+    const res = await fetch(`${PROXY_URL}/account/delete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-app-secret": APP_SHARED_SECRET || "", Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || `Request failed (${res.status})`);
+    }
+
+    await supabase.auth.signOut();
+    await clearAllAppData();
+    setSyncVersion(v => v + 1);
+  }, []);
+
   const value = useMemo(() => ({
     session,
     user: session?.user ?? null,
@@ -250,7 +278,8 @@ export function AuthProvider({ children }) {
     openAuthModal,
     signOut,
     signOutAndClearDevice,
-  }), [session, authLoaded, syncVersion, openAuthModal, signOut, signOutAndClearDevice]);
+    deleteAccount,
+  }), [session, authLoaded, syncVersion, openAuthModal, signOut, signOutAndClearDevice, deleteAccount]);
 
   const { colors, textScale } = useTheme();
   const s = useMemo(() => makeStyles(colors, textScale), [colors, textScale]);

@@ -5,14 +5,15 @@
    hits the network (or the API) twice from the same device. */
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Set this after deploying the worker — see worker/README.md.
-const PROXY_URL = "https://foundation-bible-chat-proxy.jluto193.workers.dev";
+// Set this after deploying the worker — see worker/README.md. Exported since
+// AuthContext.js also calls this worker directly (for account deletion).
+export const PROXY_URL = "https://foundation-bible-chat-proxy.jluto193.workers.dev";
 
 // Not a real secret — it ships inside the app bundle, so a determined
 // attacker can still extract it. Its job is to block casual scanning/scripts
 // that only have the URL, not to be unbreakable. Must match the worker's
 // APP_SHARED_SECRET (`npx wrangler secret put APP_SHARED_SECRET`).
-const APP_SHARED_SECRET = process.env.EXPO_PUBLIC_APP_SHARED_SECRET;
+export const APP_SHARED_SECRET = process.env.EXPO_PUBLIC_APP_SHARED_SECRET;
 
 // v3: discovery result gained a real "answer" field (grounded paragraph
 // explanation, not just per-passage one-liners) — bumped (as with the v2

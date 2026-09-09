@@ -129,6 +129,10 @@ export default {
       return handleConverse(request, env);
     }
 
+    if (url.pathname === "/account/delete") {
+      return handleDeleteAccount(request, env);
+    }
+
     if (request.method !== "POST") {
       return json({ error: "Method not allowed" }, 405);
     }
@@ -378,6 +382,59 @@ async function handleConverse(request, env) {
   return json({ text: String(data.text || "").slice(0, 3000), citations }, 200);
 }
 
+/** Permanently deletes the requesting user's Supabase account and, via
+ *  every table's `on delete cascade` on user_id, everything they've ever
+ *  synced (journal, prayers, highlights, bookmarks, plan progress, chat
+ *  history, discuss threads). Required by Apple's Guideline 5.1.1(v) for
+ *  any app that supports account creation — the client can never do this
+ *  itself, since only Supabase's service-role key (never shipped to the
+ *  app) can delete another auth.users row. Uses raw REST calls (not the
+ *  supabase-js SDK) to avoid adding a dependency, matching this worker's
+ *  existing pattern for the Resend call below. */
+async function handleDeleteAccount(request, env) {
+  if (request.method !== "POST") {
+    return json({ error: "Method not allowed" }, 405);
+  }
+  if (!env.APP_SHARED_SECRET || !timingSafeEqual(request.headers.get("x-app-secret") || "", env.APP_SHARED_SECRET)) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+    return json({ error: "Server not configured" }, 500);
+  }
+
+  const authHeader = request.headers.get("authorization") || "";
+  const accessToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!accessToken) {
+    return json({ error: "Missing session token" }, 401);
+  }
+
+  // Verify the token is a real, current session — this is what actually
+  // authorizes the deletion (the shared secret above only blocks casual
+  // scanning, same as every other route). Whoever this token belongs to is
+  // whose account gets deleted; there is no separate "user id" the caller
+  // can pass in, precisely so nobody can delete someone else's account.
+  const whoami = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+    headers: { Authorization: `Bearer ${accessToken}`, apikey: env.SUPABASE_SERVICE_ROLE_KEY },
+  });
+  if (!whoami.ok) {
+    return json({ error: "Invalid or expired session" }, 401);
+  }
+  const { id: userId } = await whoami.json();
+  if (!userId) {
+    return json({ error: "Invalid or expired session" }, 401);
+  }
+
+  const del = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, apikey: env.SUPABASE_SERVICE_ROLE_KEY },
+  });
+  if (!del.ok) {
+    return json({ error: "Failed to delete account" }, 502);
+  }
+
+  return json({ ok: true });
+}
+
 async function handleRebuildEmbeddings(request, env) {
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
   if (!env.ADMIN_KEY || !timingSafeEqual(request.headers.get("x-admin-key") || "", env.ADMIN_KEY)) {
@@ -444,7 +501,7 @@ async function handleNewSignupWebhook(request, env) {
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, x-app-secret, x-admin-key, x-webhook-secret",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-app-secret, x-admin-key, x-webhook-secret",
 };
 
 function json(obj, status = 200, extraHeaders = {}) {

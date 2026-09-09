@@ -33,3 +33,11 @@ id = "49acc10bd1e14d2389e47e349b9c4c9e"
 #   npx wrangler secret put RESEND_API_KEY       # from resend.com, free tier
 #   npx wrangler secret put NOTIFY_EMAIL         # where signup emails go — your address
 #   npx wrangler secret put SIGNUP_WEBHOOK_SECRET  # any random string; also goes in the Supabase webhook's headers
+
+# Required for POST /account/delete (in-app account deletion — Apple
+# Guideline 5.1.1(v)). SUPABASE_URL is not sensitive (it's already public in
+# the app bundle as EXPO_PUBLIC_SUPABASE_URL) so it's a plain var here; the
+# service role key is a real secret — NEVER put it in this file:
+#   npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY   # Project Settings > API > service_role, in the Supabase dashboard
+[vars]
+SUPABASE_URL = "https://rivaydnusrzogaibswct.supabase.co"
