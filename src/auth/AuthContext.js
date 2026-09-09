@@ -34,14 +34,13 @@ export function useAuth() {
 }
 
 async function localHasGuestData() {
-  const [journal, prayers, highlights, bookmarks, planProgress] = await Promise.all([
+  const [journal, prayers, highlights, bookmarks] = await Promise.all([
     getJSON(KEYS.journal, []),
     getJSON(KEYS.prayers, []),
     getJSON(KEYS.highlights, []),
     getJSON(KEYS.bookmarks, []),
-    getJSON(KEYS.planProgress, {}),
   ]);
-  return journal.length > 0 || prayers.length > 0 || highlights.length > 0 || bookmarks.length > 0 || Object.keys(planProgress).length > 0;
+  return journal.length > 0 || prayers.length > 0 || highlights.length > 0 || bookmarks.length > 0;
 }
 
 export function AuthProvider({ children }) {
@@ -235,8 +234,8 @@ export function AuthProvider({ children }) {
   // For shared/borrowed devices — signing out normally leaves everything on
   // the device (see signOut above) so a quick sign-out-and-back-in doesn't
   // lose anything. This is the explicit opt-in for "someone else uses this
-  // device next" — wipes journal/prayers/highlights/bookmarks/plan progress/
-  // chat history from AsyncStorage too, not just the Supabase session.
+  // device next" — wipes journal/prayers/highlights/bookmarks/chat history
+  // from AsyncStorage too, not just the Supabase session.
   const signOutAndClearDevice = useCallback(async () => {
     await supabase.auth.signOut();
     await clearAllAppData();
@@ -326,7 +325,7 @@ export function AuthProvider({ children }) {
             ) : (
               <>
                 <Text style={s.title}>{mode === "signUp" ? "Create Account" : "Sign In"}</Text>
-                <Text style={s.subtitle}>Syncs your journal, prayers, highlights, bookmarks, and plan progress across devices. Optional — the app fully works without an account.</Text>
+                <Text style={s.subtitle}>Syncs your journal, prayers, highlights, and bookmarks across devices. Optional — the app fully works without an account.</Text>
 
                 <TextInput
                   style={s.input}

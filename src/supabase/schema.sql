@@ -4,7 +4,7 @@
 -- (https://supabase.com/dashboard/project/rivaydnusrzogaibswct/sql/new).
 -- Safe to re-run: every statement is idempotent (`if not exists` / `create or replace`).
 --
--- Eight tables, one per synced data type in the app. Every table is scoped to
+-- Seven tables, one per synced data type in the app. Every table is scoped to
 -- the signed-in user via Row Level Security — a user can only ever read or
 -- write their own rows, enforced by Postgres itself, not just app code.
 
@@ -109,26 +109,6 @@ alter table bookmarks enable row level security;
 
 drop policy if exists "own bookmarks" on bookmarks;
 create policy "own bookmarks" on bookmarks
-  for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
--- ---------------------------------------------------------------------------
--- plan_progress — mirrors PlansScreen.js. One row per completed reading-plan
--- day, matching the existing local toggle-by-ref semantics exactly.
--- ---------------------------------------------------------------------------
-create table if not exists plan_progress (
-  user_id uuid not null references auth.users(id) on delete cascade,
-  plan_id text not null,
-  ref text not null,
-  created_at timestamptz not null default now(),
-  primary key (user_id, plan_id, ref)
-);
-
-alter table plan_progress enable row level security;
-
-drop policy if exists "own plan progress" on plan_progress;
-create policy "own plan progress" on plan_progress
   for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);

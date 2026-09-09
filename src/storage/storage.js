@@ -49,7 +49,7 @@ export async function setString(key, value) {
 export async function clearAllAppData() {
   try {
     await AsyncStorage.multiRemove([
-      KEYS.highlights, KEYS.bookmarks, KEYS.journal, KEYS.prayers, KEYS.planProgress, KEYS.chatHistory, KEYS.discussThreads,
+      KEYS.highlights, KEYS.bookmarks, KEYS.journal, KEYS.prayers, KEYS.chatHistory, KEYS.discussThreads,
     ]);
   } catch (e) {
     // best-effort

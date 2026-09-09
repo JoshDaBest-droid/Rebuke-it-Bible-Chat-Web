@@ -25,12 +25,12 @@ export default function SettingsScreen({ navigation }) {
   };
 
   // For a shared/borrowed device — wipes journal, prayers, highlights,
-  // bookmarks, plan progress, and Guide history from THIS device, not just
-  // the account (nothing already synced to your account is deleted).
+  // bookmarks, and Guide history from THIS device, not just the account
+  // (nothing already synced to your account is deleted).
   const confirmSignOutAndClear = () => {
     Alert.alert(
       "Sign out and clear this device",
-      "This signs you out AND permanently deletes your journal, prayers, highlights, bookmarks, plan progress, and Guide history from this device. Anything already synced to your account is untouched — this only clears what's stored locally, for the next person who uses this device. This can't be undone.",
+      "This signs you out AND permanently deletes your journal, prayers, highlights, bookmarks, and Guide history from this device. Anything already synced to your account is untouched — this only clears what's stored locally, for the next person who uses this device. This can't be undone.",
       [
         { text: "Cancel", style: "cancel" },
         { text: "Sign Out & Clear", style: "destructive", onPress: signOutAndClearDevice },
@@ -41,7 +41,7 @@ export default function SettingsScreen({ navigation }) {
   const confirmDeleteAccount = () => {
     Alert.alert(
       "Delete account",
-      "This permanently deletes your account and everything synced to it — journal, prayers, highlights, bookmarks, plan progress, and Guide history. This cannot be undone.",
+      "This permanently deletes your account and everything synced to it — journal, prayers, highlights, bookmarks, and Guide history. This cannot be undone.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -63,7 +63,7 @@ export default function SettingsScreen({ navigation }) {
   const confirmClear = () => {
     Alert.alert(
       "Clear local data",
-      "This clears all journal entries, highlights, bookmarks, plan progress, and saved prayers stored on this device. Continue?",
+      "This clears all journal entries, highlights, bookmarks, and saved prayers stored on this device. Continue?",
       [
         { text: "Cancel", style: "cancel" },
         { text: "Clear", style: "destructive", onPress: async () => { await clearAllAppData(); Alert.alert("Local data cleared"); } },
@@ -77,7 +77,7 @@ export default function SettingsScreen({ navigation }) {
         <Text style={s.badge}>ACCOUNT</Text>
         {user ? (
           <>
-            <Text style={s.bodyText}>Signed in as {user.email}. Your journal, prayers, highlights, bookmarks, plan progress, and preferences sync to this account.</Text>
+            <Text style={s.bodyText}>Signed in as {user.email}. Your journal, prayers, highlights, bookmarks, and preferences sync to this account.</Text>
             <View style={s.btnRow}>
               <Pressable style={s.dangerBtn} onPress={confirmSignOut}>
                 <Text style={s.dangerBtnText}>Sign Out</Text>
@@ -93,7 +93,7 @@ export default function SettingsScreen({ navigation }) {
           </>
         ) : (
           <>
-            <Text style={s.bodyText}>Sign in to sync your journal, prayers, highlights, bookmarks, and plan progress across devices. Completely optional — everything already works without an account.</Text>
+            <Text style={s.bodyText}>Sign in to sync your journal, prayers, highlights, and bookmarks across devices. Completely optional — everything already works without an account.</Text>
             <Pressable style={s.primaryBtn} onPress={openAuthModal}>
               <Text style={s.primaryBtnText}>Sign In / Create Account</Text>
             </Pressable>

@@ -13,17 +13,16 @@ import ChatScreen from "../screens/ChatScreen";
 import DiscussScreen from "../screens/DiscussScreen";
 import PrayerScreen from "../screens/PrayerScreen";
 import JournalScreen from "../screens/JournalScreen";
-import PlansScreen from "../screens/PlansScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 
 const Drawer = createDrawerNavigator();
 const Tab = createBottomTabNavigator();
 
-// All 7 screens live in this one list — Home/Bible/Chat show as bottom tab
-// buttons AND appear here in the drawer; Prayer/Journal/Plans/Settings are
-// drawer-only, but since they're still Tab.Screens under the hood, the
-// bottom tab bar (with Home/Bible/Chat) stays on screen no matter which one
-// is open. `route` is the internal Tab.Screen name (used for navigation);
+// All 6 screens live in this one list — Home/Bible/Chat/Discuss show as
+// bottom tab buttons AND appear here in the drawer; Prayer/Journal/Settings
+// are drawer-only, but since they're still Tab.Screens under the hood, the
+// bottom tab bar stays on screen no matter which one is open. `route` is
+// the internal Tab.Screen name (used for navigation);
 // `label` is what's actually shown — kept separate so renaming a screen in
 // the UI (e.g. Chat -> Guide) never touches the route/navigation wiring.
 const MENU_ITEMS = [
@@ -33,7 +32,6 @@ const MENU_ITEMS = [
   { route: "Discuss", label: "Discuss" },
   { route: "Prayer", label: "Prayer" },
   { route: "Journal", label: "Journal" },
-  { route: "Plans", label: "Plans" },
   { route: "Settings", label: "Settings" },
 ];
 
@@ -73,7 +71,6 @@ function MainTabs() {
       <Tab.Screen name="Discuss" component={DiscussScreen} />
       <Tab.Screen name="Prayer" component={PrayerScreen} options={{ tabBarItemStyle: { display: "none" } }} />
       <Tab.Screen name="Journal" component={JournalScreen} options={{ tabBarItemStyle: { display: "none" } }} />
-      <Tab.Screen name="Plans" component={PlansScreen} options={{ tabBarItemStyle: { display: "none" } }} />
       <Tab.Screen name="Settings" component={SettingsScreen} options={{ tabBarItemStyle: { display: "none" } }} />
     </Tab.Navigator>
   );

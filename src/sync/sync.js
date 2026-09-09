@@ -60,23 +60,6 @@ async function reconcileArray(table, userId, items, mapItem, idKey) {
   }
 }
 
-// ---- plan_progress: composite (plan_id, ref) key, object-of-arrays shape ----
-async function pushPlanProgress(userId, progressObj) {
-  const rows = [];
-  for (const planId of Object.keys(progressObj || {})) {
-    for (const ref of progressObj[planId] || []) rows.push({ user_id: userId, plan_id: planId, ref });
-  }
-  if (rows.length > 0) {
-    await supabase.from("plan_progress").upsert(rows, { onConflict: "user_id,plan_id,ref" });
-  }
-  const { data: existing } = await supabase.from("plan_progress").select("plan_id,ref").eq("user_id", userId);
-  const keep = new Set(rows.map(r => `${r.plan_id}::${r.ref}`));
-  const toDelete = (existing || []).filter(r => !keep.has(`${r.plan_id}::${r.ref}`));
-  for (const row of toDelete) {
-    await supabase.from("plan_progress").delete().eq("user_id", userId).eq("plan_id", row.plan_id).eq("ref", row.ref);
-  }
-}
-
 // ---- user_settings: single row, one column per preference ----
 const SETTINGS_COLUMNS = {
   [KEYS.theme]: "theme",
@@ -109,7 +92,6 @@ const JSON_HANDLERS = {
     reconcileArray("highlights", userId, list, item => ({ ref: item.ref, text: item.text }), "ref"),
   [KEYS.bookmarks]: (userId, list) =>
     reconcileArray("bookmarks", userId, list, item => ({ ref: item.ref, text: item.text }), "ref"),
-  [KEYS.planProgress]: (userId, obj) => pushPlanProgress(userId, obj),
   [KEYS.chatHistory]: (userId, list) =>
     reconcileArray("chat_history", userId, list, item => ({ client_id: item.id, question: item.question, response: item.response }), "client_id"),
   [KEYS.discussThreads]: (userId, list) =>
@@ -136,7 +118,7 @@ export function syncPushString(key, value) {
 
 // ---- Pull (sign-in) and one-time upload (fresh sign-up with guest data) ----
 
-const TABLES_FOR_EXISTENCE_CHECK = ["journal_entries", "prayers", "highlights", "bookmarks", "plan_progress", "user_settings", "chat_history", "discuss_threads"];
+const TABLES_FOR_EXISTENCE_CHECK = ["journal_entries", "prayers", "highlights", "bookmarks", "user_settings", "chat_history", "discuss_threads"];
 
 /** Cheap existence check used by AuthContext to decide pull vs. confirm-overwrite. */
 export async function hasAnyRemoteData(userId) {
@@ -151,12 +133,11 @@ export async function hasAnyRemoteData(userId) {
  *  Writes AsyncStorage directly (not via storage.js's setJSON/setString) so
  *  this doesn't immediately re-trigger a redundant push of what we just pulled. */
 export async function pullAllToLocal(userId) {
-  const [journal, prayers, highlights, bookmarks, plans, settings, chatHistory, discussThreads] = await Promise.all([
+  const [journal, prayers, highlights, bookmarks, settings, chatHistory, discussThreads] = await Promise.all([
     supabase.from("journal_entries").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
     supabase.from("prayers").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
     supabase.from("highlights").select("*").eq("user_id", userId),
     supabase.from("bookmarks").select("*").eq("user_id", userId),
-    supabase.from("plan_progress").select("*").eq("user_id", userId),
     supabase.from("user_settings").select("*").eq("user_id", userId).maybeSingle(),
     supabase.from("chat_history").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
     supabase.from("discuss_threads").select("*").eq("user_id", userId).order("updated_at", { ascending: false }),
@@ -170,12 +151,6 @@ export async function pullAllToLocal(userId) {
   await setLocalJSON(KEYS.bookmarks, (bookmarks.data || []).map(r => ({ ref: r.ref, text: r.text, date: r.created_at })));
   await setLocalJSON(KEYS.chatHistory, (chatHistory.data || []).map(r => ({ id: r.client_id, question: r.question, response: r.response, date: r.created_at })));
   await setLocalJSON(KEYS.discussThreads, (discussThreads.data || []).map(r => ({ id: r.client_id, title: r.title, messages: r.messages, createdAt: r.created_at, updatedAt: r.updated_at })));
-
-  const progressObj = {};
-  for (const row of plans.data || []) {
-    (progressObj[row.plan_id] = progressObj[row.plan_id] || []).push(row.ref);
-  }
-  await setLocalJSON(KEYS.planProgress, progressObj);
 
   const row = settings.data;
   if (row) {
@@ -199,12 +174,11 @@ export async function pushAllFromLocal(userId) {
   };
   const getLocalString = (key) => AsyncStorage.getItem(key);
 
-  const [journal, prayers, highlights, bookmarks, planProgress, chatHistory, discussThreads] = await Promise.all([
+  const [journal, prayers, highlights, bookmarks, chatHistory, discussThreads] = await Promise.all([
     getLocalJSON(KEYS.journal, []),
     getLocalJSON(KEYS.prayers, []),
     getLocalJSON(KEYS.highlights, []),
     getLocalJSON(KEYS.bookmarks, []),
-    getLocalJSON(KEYS.planProgress, {}),
     getLocalJSON(KEYS.chatHistory, []),
     getLocalJSON(KEYS.discussThreads, []),
   ]);
@@ -214,7 +188,6 @@ export async function pushAllFromLocal(userId) {
     JSON_HANDLERS[KEYS.prayers](userId, prayers),
     JSON_HANDLERS[KEYS.highlights](userId, highlights),
     JSON_HANDLERS[KEYS.bookmarks](userId, bookmarks),
-    JSON_HANDLERS[KEYS.planProgress](userId, planProgress),
     JSON_HANDLERS[KEYS.chatHistory](userId, chatHistory),
     JSON_HANDLERS[KEYS.discussThreads](userId, discussThreads),
   ]);

@@ -16,7 +16,6 @@ export const KEYS = {
   bookmarks: "foundation_bookmarks",
   journal: "foundation_journal",
   prayers: "foundation_prayers",
-  planProgress: "foundation_plan_progress",
   chatHistory: "foundation_chat_history",
   discussThreads: "foundation_discuss_threads",
 };

@@ -1,5 +1,5 @@
-/* Daily devotionals, reading plans, and mood -> verse pools for AI-chat
-   journeys — demo dataset. */
+/* Daily devotionals and mood -> verse pools for AI-chat journeys — demo
+   dataset. */
 import { VERSES } from "./bibleData";
 
 export const DAILY_DEVOTIONALS = [
@@ -43,32 +43,6 @@ export const HOME_QUOTES = [
 export function getTodaysHomeQuote() {
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
   return HOME_QUOTES[dayOfYear % HOME_QUOTES.length];
-}
-
-export const READING_PLANS = [
-  { id: "peace-7", title: "7 Days Toward Peace", days: 7, category: "Wellness",
-    description: "A week walking through scripture's answer to anxiety and worry.",
-    refs: ["Philippians 4:6", "Philippians 4:7", "Matthew 6:25", "Matthew 6:34", "Psalm 46:1", "Psalm 46:10", "Isaiah 41:10"] },
-  { id: "identity-5", title: "Who God Says You Are", days: 5, category: "Identity",
-    description: "Five short readings on identity and worth rooted in scripture, not performance.",
-    refs: ["Psalm 139:14", "Genesis 1:1", "John 3:16", "Jeremiah 29:11", "Galatians 5:22"] },
-  { id: "gospel-john-3", title: "The Gospel in One Chapter", days: 1, category: "Foundations",
-    description: "John 3 in a single sitting — the heart of the Christian message.", refs: ["John 3:16", "John 3:17"] },
-  { id: "love-4", title: "What Love Looks Like", days: 4, category: "Relationships",
-    description: "1 Corinthians 13 unpacked over four days for real relationships.",
-    refs: ["1 Corinthians 13:4", "1 Corinthians 13:7", "John 3:16", "Galatians 5:22"] },
-];
-
-/* Same day-based rotation idea as getTodaysDevotional()/getTodaysHomeQuote()
-   above, just on a 7-day cycle instead of daily. Rotates which plan leads
-   the Plans tab (marked "Featured this week" there) — every plan is still
-   shown and any in-progress plan keeps its saved progress, only the order
-   changes, so a plan never disappears out from under someone mid-way
-   through it. */
-export function getWeeklyPlanOrder() {
-  const weekIndex = Math.floor(Date.now() / (7 * 86400000));
-  const offset = weekIndex % READING_PLANS.length;
-  return [...READING_PLANS.slice(offset), ...READING_PLANS.slice(0, offset)];
 }
 
 /* Mood -> verse pools used by the AI chat's journey-request handling

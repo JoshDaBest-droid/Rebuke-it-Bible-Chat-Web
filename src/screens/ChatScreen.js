@@ -21,10 +21,9 @@ function formatHistoryDate(iso) {
 
 // A fixed pool (not freeform) so repeated taps — by this user or any other —
 // are exact-text matches against the worker's response cache, turning into
-// free cache hits instead of new Claude calls. Rotates daily (same pattern
-// as getWeeklyPlanOrder in devotionals.js) so regulars see variety over
-// time, while everyone sees the same 4 on a given day, which maximizes how
-// often those 4 are already warm in the cache.
+// free cache hits instead of new Claude calls. Rotates daily so regulars see
+// variety over time, while everyone sees the same 4 on a given day, which
+// maximizes how often those 4 are already warm in the cache.
 const QUICK_PROMPTS = [
   "I feel anxious about the future",
   "I feel like God has forgotten me",
