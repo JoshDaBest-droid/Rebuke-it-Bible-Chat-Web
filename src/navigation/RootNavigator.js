@@ -106,7 +106,6 @@ function CustomDrawerContent(props) {
         })}
       </DrawerContentScrollView>
       <View style={[s.footer, { paddingBottom: Math.max(14, insets.bottom + 4) }]}>
-        <Text style={s.footerText}>Free forever · No ads{"\n"}Your data, your device — synced only if you sign in</Text>
         <Text style={s.verseFooter}>Joshua 1:9</Text>
       </View>
     </View>
@@ -160,7 +159,6 @@ function makeDrawerStyles(c, textScale) {
     itemText: { color: c.text, fontSize: 17 * textScale },
     itemTextActive: { color: c.accent, fontWeight: "700" },
     footer: { borderTopWidth: 1, borderTopColor: c.border, paddingHorizontal: 16, paddingTop: 14, marginBottom: 6 },
-    footerText: { color: c.textMuted, fontSize: 13 * textScale, lineHeight: 18 * textScale },
     verseFooter: { color: c.textMuted, fontSize: 13 * textScale, marginTop: 8, opacity: 0.75 },
   });
 }

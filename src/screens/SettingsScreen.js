@@ -156,7 +156,7 @@ export default function SettingsScreen({ navigation }) {
 
       <View style={s.card}>
         <Text style={s.badge}>PRIVACY</Text>
-        <Text style={s.bodyText}>Your journal entries, highlights, bookmarks, and saved prayers are always stored on this device. If you sign in, they also sync to your account so you can access them elsewhere — otherwise nothing leaves this device. Rebuke it: Bible Chat is free forever, with no ads and no data resale.</Text>
+        <Text style={s.bodyText}>Your journal entries, highlights, bookmarks, and saved prayers are always stored on this device. If you sign in, they also sync to your account so you can access them elsewhere — otherwise nothing leaves this device. Rebuke it: Bible Chat has no ads and no data resale.</Text>
         <Pressable style={s.dangerBtn} onPress={confirmClear}>
           <Text style={s.dangerBtnText}>Clear all local data</Text>
         </Pressable>

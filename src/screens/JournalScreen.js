@@ -36,7 +36,7 @@ export default function JournalScreen() {
 
   return (
     <ScrollView style={s.screen} contentContainerStyle={{ padding: 16 }}>
-      <Text style={s.pageSub}>Private reflections, saved verses, and notes — stored on this device, and synced to your account if you're signed in.</Text>
+      <Text style={s.pageSub}>Reflections, saved verses, and notes — stored on this device, and synced to your account if you're signed in.</Text>
 
       <View style={s.card}>
         <TextInput

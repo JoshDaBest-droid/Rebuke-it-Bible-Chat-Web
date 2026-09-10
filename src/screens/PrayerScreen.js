@@ -41,7 +41,7 @@ export default function PrayerScreen() {
 
   return (
     <ScrollView style={s.screen} contentContainerStyle={{ padding: 16 }}>
-      <Text style={s.pageSub}>Completely private. Only you can see anything here — no public feed, no other users. Synced to your account if you're signed in.</Text>
+      <Text style={s.pageSub}>Synced to your account if you're signed in.</Text>
 
       <View style={s.card}>
         <Text style={s.badge}>PERSONALIZED VERSE GENERATOR</Text>
@@ -70,7 +70,7 @@ export default function PrayerScreen() {
         <TextInput
           style={s.textarea}
           multiline
-          placeholder="Write a prayer in your own words — visible only to you..."
+          placeholder="Write a prayer in your own words..."
           placeholderTextColor={colors.textMuted}
           value={ownPrayer}
           onChangeText={setOwnPrayer}
@@ -81,10 +81,10 @@ export default function PrayerScreen() {
       </View>
 
       <View style={s.card}>
-        <Text style={s.badge}>MY PRAYERS — PRIVATE</Text>
-        <Text style={s.mutedText}>Stored on this device, and synced to your account if you're signed in. Never shared, never public.</Text>
+        <Text style={s.badge}>MY PRAYERS</Text>
+        <Text style={s.mutedText}>Stored on this device, and synced to your account if you're signed in.</Text>
         {prayers.length === 0 && (
-          <Text style={[s.mutedText, { marginTop: 10 }]}>No saved prayers yet. Write one above — it stays private to you.</Text>
+          <Text style={[s.mutedText, { marginTop: 10 }]}>No saved prayers yet. Write one above to get started.</Text>
         )}
         {prayers.map(p => (
           <View key={p.id} style={s.prayerEntry}>
