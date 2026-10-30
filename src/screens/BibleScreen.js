@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { View, Text, Pressable, StyleSheet, Modal, FlatList, TextInput, ScrollView, PanResponder } from "react-native";
-import * as Speech from "expo-speech";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../theme/ThemeContext";
 import { useVerseSheet } from "../components/VerseSheetContext";
@@ -32,7 +31,6 @@ export default function BibleScreen({ route }) {
   const [results, setResults] = useState([]);
   const [highlights, setHighlights] = useState([]);
   const [bookmarks, setBookmarks] = useState([]);
-  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const refresh = useCallback(async () => {
     setHighlights(await getJSON(KEYS.highlights, []));
@@ -75,28 +73,6 @@ export default function BibleScreen({ route }) {
       else if (gesture.dx >= SWIPE_THRESHOLD) goPrev();
     },
   });
-
-  // KJV read-aloud — currently the app's only translation, so this speaks
-  // whatever chapter is on screen. Stops automatically if the user
-  // navigates to a different chapter/book or leaves the screen, so speech
-  // never keeps playing over content the user isn't looking at anymore.
-  useEffect(() => {
-    return () => { Speech.stop(); };
-  }, [book, chapter]);
-
-  const toggleSpeak = () => {
-    if (isSpeaking) {
-      Speech.stop();
-      setIsSpeaking(false);
-      return;
-    }
-    if (verses.length === 0) return;
-    setIsSpeaking(true);
-    verses.forEach((text, i) => {
-      const isLast = i === verses.length - 1;
-      Speech.speak(text, isLast ? { onDone: () => setIsSpeaking(false), onStopped: () => setIsSpeaking(false), onError: () => setIsSpeaking(false) } : undefined);
-    });
-  };
 
   const runSearch = () => {
     const q = query.trim().toLowerCase();
@@ -141,9 +117,6 @@ export default function BibleScreen({ route }) {
         </Pressable>
         <Pressable style={s.arrowBtn} onPress={goNext} accessibilityLabel="Next chapter">
           <Ionicons name="chevron-forward" size={20} color={colors.text} />
-        </Pressable>
-        <Pressable style={s.arrowBtn} onPress={toggleSpeak} accessibilityLabel={isSpeaking ? "Stop reading aloud" : "Read chapter aloud"}>
-          <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={20} color={colors.text} />
         </Pressable>
         <Pressable style={s.arrowBtn} onPress={() => setSearchVisible(true)} accessibilityLabel="Search the Bible">
           <Ionicons name="search-outline" size={20} color={colors.text} />
