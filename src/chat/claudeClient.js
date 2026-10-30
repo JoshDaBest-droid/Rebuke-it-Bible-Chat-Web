@@ -4,6 +4,7 @@
    Also owns an on-device response cache: identical question + voice never
    hits the network (or the API) twice from the same device. */
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 
 // Set this after deploying the worker — see worker/README.md. Exported since
 // AuthContext.js also calls this worker directly (for account deletion).
@@ -13,7 +14,9 @@ export const PROXY_URL = "https://foundation-bible-chat-proxy.jluto193.workers.d
 // attacker can still extract it. Its job is to block casual scanning/scripts
 // that only have the URL, not to be unbreakable. Must match the worker's
 // APP_SHARED_SECRET (`npx wrangler secret put APP_SHARED_SECRET`).
-export const APP_SHARED_SECRET = process.env.EXPO_PUBLIC_APP_SHARED_SECRET;
+// Read via expo-constants, not process.env.EXPO_PUBLIC_* — see the comment
+// in src/supabase/client.js for why (an Expo SDK 57 dev-mode runtime bug).
+export const APP_SHARED_SECRET = Constants.expoConfig.extra.appSharedSecret;
 
 // v3: discovery result gained a real "answer" field (grounded paragraph
 // explanation, not just per-passage one-liners) — bumped (as with the v2

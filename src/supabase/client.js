@@ -12,9 +12,16 @@ import { createClient } from "@supabase/supabase-js";
 import * as aesjs from "aes-js";
 import "react-native-get-random-values";
 import * as SecureStore from "expo-secure-store";
+import Constants from "expo-constants";
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+// Read via expo-constants (app.config.js's extra, resolved from .env by
+// Node at config-evaluation time) rather than process.env.EXPO_PUBLIC_* at
+// app runtime — the latter goes through an Expo SDK 57 dev-mode "virtual
+// module" (expo/virtual/env.js) that doesn't reliably reach a real device,
+// producing a supabaseUrl of literally "undefined" and a fetch error like
+// "a server with the specified hostname could not be found". See
+// app.config.js for the full explanation.
+const { supabaseUrl, supabaseAnonKey } = Constants.expoConfig.extra;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn(
