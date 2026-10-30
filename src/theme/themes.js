@@ -46,6 +46,17 @@ export const THEME_SWATCHES = [
   { id: "classical", label: "Classical", color: "#9c6b2e" },
 ];
 
+// Verse highlight colors — fixed, not theme-dependent, like real
+// highlighter ink. Light enough that dark verse text stays readable over
+// them in both light and dark app themes.
+export const HIGHLIGHT_COLORS = [
+  { id: "yellow", label: "Yellow", color: "#FFE066" },
+  { id: "green", label: "Green", color: "#B9F6CA" },
+  { id: "blue", label: "Blue", color: "#A7D8FF" },
+  { id: "pink", label: "Pink", color: "#FFB3C7" },
+];
+export const DEFAULT_HIGHLIGHT_COLOR = "yellow";
+
 // Optional override for the main reading/body text color, independent of
 // theme pack. "null" means "use the theme's default text color".
 export const FONT_COLORS = [

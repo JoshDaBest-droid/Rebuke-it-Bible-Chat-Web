@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { Modal, View, Text, Pressable, ScrollView, StyleSheet, Share } from "react-native";
+import { Modal, View, Text, Pressable, ScrollView, StyleSheet, Share, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../theme/ThemeContext";
 import { VERSES, COMMENTARY, CROSS_REFS, lookupKJVVerse, getBibleOnlyExplanation } from "../data/bibleData";
 import { KEYS, getJSON, setJSON } from "../storage/storage";
 import { DISCLAIMER_TEXT } from "../chat/chatEngine";
 import { useAuth } from "../auth/AuthContext";
+import { HIGHLIGHT_COLORS, DEFAULT_HIGHLIGHT_COLOR } from "../theme/themes";
 
 const VerseSheetCtx = createContext(null);
 
@@ -23,6 +24,7 @@ export function VerseSheetProvider({ children }) {
   const [tab, setTab] = useState("crossrefs");
   const [highlights, setHighlights] = useState([]);
   const [bookmarks, setBookmarks] = useState([]);
+  const [noteText, setNoteText] = useState("");
   const [aiInsight, setAiInsight] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
 
@@ -40,31 +42,68 @@ export function VerseSheetProvider({ children }) {
     setText(t);
     setTab("crossrefs");
     setAiInsight(null);
+    // Prefill from whichever record already has a note — a verse that's
+    // both highlighted and bookmarked keeps one shared note between them.
+    const existingHighlight = highlights.find(h => h.ref === r);
+    const existingBookmark = bookmarks.find(b => b.ref === r);
+    setNoteText((existingHighlight && existingHighlight.note) || (existingBookmark && existingBookmark.note) || "");
     setVisible(true);
-  }, []);
+  }, [highlights, bookmarks]);
 
-  const closeSheet = useCallback(() => setVisible(false), []);
-
-  const isHighlighted = ref && highlights.some(h => h.ref === ref);
+  const activeHighlight = ref && highlights.find(h => h.ref === ref);
+  const isHighlighted = !!activeHighlight;
   const isBookmarked = ref && bookmarks.some(b => b.ref === ref);
+  const highlightColor = (activeHighlight && activeHighlight.color) || DEFAULT_HIGHLIGHT_COLOR;
 
   const toggleHighlight = useCallback(async () => {
     let list = highlights;
     const idx = list.findIndex(h => h.ref === ref);
     if (idx >= 0) list = list.filter(h => h.ref !== ref);
-    else list = [...list, { ref, text, date: new Date().toISOString() }];
+    else list = [...list, { ref, text, color: DEFAULT_HIGHLIGHT_COLOR, note: noteText, date: new Date().toISOString() }];
     setHighlights(list);
     await setJSON(KEYS.highlights, list);
-  }, [highlights, ref, text]);
+  }, [highlights, ref, text, noteText]);
+
+  const setHighlightColorFor = useCallback(async (colorId) => {
+    if (!isHighlighted) return;
+    const list = highlights.map(h => h.ref === ref ? { ...h, color: colorId } : h);
+    setHighlights(list);
+    await setJSON(KEYS.highlights, list);
+  }, [highlights, ref, isHighlighted]);
 
   const toggleBookmark = useCallback(async () => {
     let list = bookmarks;
     const idx = list.findIndex(b => b.ref === ref);
     if (idx >= 0) list = list.filter(b => b.ref !== ref);
-    else list = [...list, { ref, text, date: new Date().toISOString() }];
+    else list = [...list, { ref, text, note: noteText, date: new Date().toISOString() }];
     setBookmarks(list);
     await setJSON(KEYS.bookmarks, list);
-  }, [bookmarks, ref, text]);
+  }, [bookmarks, ref, text, noteText]);
+
+  // Persists the current note text onto whichever record(s) already exist
+  // for this verse — a no-op if the verse is neither highlighted nor
+  // bookmarked yet (there's nothing to attach a note to). Called on blur,
+  // not per keystroke, so typing a note doesn't write to storage on every
+  // character.
+  const saveNote = useCallback(async () => {
+    if (ref && highlights.some(h => h.ref === ref)) {
+      const list = highlights.map(h => h.ref === ref ? { ...h, note: noteText } : h);
+      setHighlights(list);
+      await setJSON(KEYS.highlights, list);
+    }
+    if (ref && bookmarks.some(b => b.ref === ref)) {
+      const list = bookmarks.map(b => b.ref === ref ? { ...b, note: noteText } : b);
+      setBookmarks(list);
+      await setJSON(KEYS.bookmarks, list);
+    }
+  }, [ref, highlights, bookmarks, noteText]);
+
+  // Saves any pending note edit before closing, so tapping away from the
+  // input (rather than letting it blur first) never silently drops it.
+  const closeSheet = useCallback(() => {
+    saveNote();
+    setVisible(false);
+  }, [saveNote]);
 
   const shareVerse = useCallback(() => {
     Share.share({ message: `"${text}" — ${ref} (KJV, via Rebuke it: Bible Chat)` }).catch(() => {});
@@ -91,7 +130,9 @@ export function VerseSheetProvider({ children }) {
         <VerseSheetContent
           ref={ref} text={text} tab={tab} setTab={setTab}
           isHighlighted={isHighlighted} isBookmarked={isBookmarked}
+          highlightColor={highlightColor} setHighlightColorFor={setHighlightColorFor}
           toggleHighlight={toggleHighlight} toggleBookmark={toggleBookmark}
+          noteText={noteText} setNoteText={setNoteText} saveNote={saveNote}
           shareVerse={shareVerse} closeSheet={closeSheet}
           crossRefs={crossRefs} commentary={commentary}
           aiInsight={aiInsight} aiLoading={aiLoading} askAIInsight={askAIInsight}
@@ -102,7 +143,7 @@ export function VerseSheetProvider({ children }) {
   );
 }
 
-function VerseSheetContent({ ref, text, tab, setTab, isHighlighted, isBookmarked, toggleHighlight, toggleBookmark, shareVerse, closeSheet, crossRefs, commentary, aiInsight, aiLoading, askAIInsight, openVerseSheet }) {
+function VerseSheetContent({ ref, text, tab, setTab, isHighlighted, isBookmarked, highlightColor, setHighlightColorFor, toggleHighlight, toggleBookmark, noteText, setNoteText, saveNote, shareVerse, closeSheet, crossRefs, commentary, aiInsight, aiLoading, askAIInsight, openVerseSheet }) {
   const { colors, textScale } = useTheme();
   const s = makeStyles(colors, textScale);
   if (!ref) return null;
@@ -129,6 +170,33 @@ function VerseSheetContent({ ref, text, tab, setTab, isHighlighted, isBookmarked
               <Text style={s.pillText}>Share</Text>
             </Pressable>
           </View>
+
+          {isHighlighted && (
+            <View style={s.swatchRow}>
+              {HIGHLIGHT_COLORS.map(hc => (
+                <Pressable
+                  key={hc.id}
+                  onPress={() => setHighlightColorFor(hc.id)}
+                  style={[s.swatch, { backgroundColor: hc.color }, highlightColor === hc.id && s.swatchSelected]}
+                  accessibilityLabel={`${hc.label} highlight`}
+                >
+                  {highlightColor === hc.id && <Ionicons name="checkmark" size={14} color="#2a2a2a" />}
+                </Pressable>
+              ))}
+            </View>
+          )}
+
+          {(isHighlighted || isBookmarked) && (
+            <TextInput
+              style={s.noteInput}
+              placeholder="Add a note..."
+              placeholderTextColor={colors.textMuted}
+              value={noteText}
+              onChangeText={setNoteText}
+              onBlur={saveNote}
+              multiline
+            />
+          )}
 
           <View style={s.tabRow}>
             {[["crossrefs", "Cross-References"], ["commentary", "Commentary"], ["ai", "AI Insight"]].map(([id, label]) => (
@@ -210,6 +278,10 @@ function makeStyles(c, textScale) {
     pillActive: { backgroundColor: c.accent, borderColor: "transparent" },
     pillText: { color: c.textMuted, fontSize: 13 * textScale },
     pillTextActive: { color: c.accentContrast },
+    swatchRow: { flexDirection: "row", gap: 10, marginTop: -8, marginBottom: 16 },
+    swatch: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "transparent" },
+    swatchSelected: { borderColor: c.text },
+    noteInput: { borderWidth: 1, borderColor: c.border, borderRadius: 12, padding: 10, color: c.text, backgroundColor: c.bgSunken, fontSize: 13 * textScale, minHeight: 44, textAlignVertical: "top", marginBottom: 16 },
     tabRow: { flexDirection: "row", gap: 18, borderBottomWidth: 1, borderBottomColor: c.border, marginBottom: 12 },
     tabBtn: { paddingBottom: 8 },
     tabText: { color: c.textMuted, fontSize: 13 * textScale },

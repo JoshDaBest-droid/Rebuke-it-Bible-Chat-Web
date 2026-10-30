@@ -79,12 +79,16 @@ create policy "own prayers" on prayers
 -- ---------------------------------------------------------------------------
 -- highlights & bookmarks — mirrors VerseSheetContext.js. No synthetic id:
 -- the app already keys these by verse reference alone (toggle on/off), so
--- (user_id, ref) is the natural primary key.
+-- (user_id, ref) is the natural primary key. color is one of
+-- src/theme/themes.js's HIGHLIGHT_COLORS ids; note is the optional note set
+-- from the verse popup (shared between a verse's highlight and bookmark).
 -- ---------------------------------------------------------------------------
 create table if not exists highlights (
   user_id uuid not null references auth.users(id) on delete cascade,
   ref text not null,
   text text not null,
+  color text,
+  note text,
   created_at timestamptz not null default now(),
   primary key (user_id, ref)
 );
@@ -101,6 +105,7 @@ create table if not exists bookmarks (
   user_id uuid not null references auth.users(id) on delete cascade,
   ref text not null,
   text text not null,
+  note text,
   created_at timestamptz not null default now(),
   primary key (user_id, ref)
 );

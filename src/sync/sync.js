@@ -89,9 +89,9 @@ const JSON_HANDLERS = {
   [KEYS.prayers]: (userId, list) =>
     reconcileArray("prayers", userId, list, item => ({ client_id: item.id, text: item.text, type: item.type }), "client_id"),
   [KEYS.highlights]: (userId, list) =>
-    reconcileArray("highlights", userId, list, item => ({ ref: item.ref, text: item.text }), "ref"),
+    reconcileArray("highlights", userId, list, item => ({ ref: item.ref, text: item.text, color: item.color || null, note: item.note || null }), "ref"),
   [KEYS.bookmarks]: (userId, list) =>
-    reconcileArray("bookmarks", userId, list, item => ({ ref: item.ref, text: item.text }), "ref"),
+    reconcileArray("bookmarks", userId, list, item => ({ ref: item.ref, text: item.text, note: item.note || null }), "ref"),
   [KEYS.chatHistory]: (userId, list) =>
     reconcileArray("chat_history", userId, list, item => ({ client_id: item.id, question: item.question, response: item.response }), "client_id"),
   [KEYS.discussThreads]: (userId, list) =>
@@ -147,8 +147,8 @@ export async function pullAllToLocal(userId) {
 
   await setLocalJSON(KEYS.journal, (journal.data || []).map(r => ({ id: r.client_id, text: r.text, linkedRef: r.linked_ref, date: r.created_at })));
   await setLocalJSON(KEYS.prayers, (prayers.data || []).map(r => ({ id: r.client_id, text: r.text, type: r.type, date: r.created_at })));
-  await setLocalJSON(KEYS.highlights, (highlights.data || []).map(r => ({ ref: r.ref, text: r.text, date: r.created_at })));
-  await setLocalJSON(KEYS.bookmarks, (bookmarks.data || []).map(r => ({ ref: r.ref, text: r.text, date: r.created_at })));
+  await setLocalJSON(KEYS.highlights, (highlights.data || []).map(r => ({ ref: r.ref, text: r.text, color: r.color, note: r.note, date: r.created_at })));
+  await setLocalJSON(KEYS.bookmarks, (bookmarks.data || []).map(r => ({ ref: r.ref, text: r.text, note: r.note, date: r.created_at })));
   await setLocalJSON(KEYS.chatHistory, (chatHistory.data || []).map(r => ({ id: r.client_id, question: r.question, response: r.response, date: r.created_at })));
   await setLocalJSON(KEYS.discussThreads, (discussThreads.data || []).map(r => ({ id: r.client_id, title: r.title, messages: r.messages, createdAt: r.created_at, updatedAt: r.updated_at })));
 

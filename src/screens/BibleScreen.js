@@ -4,7 +4,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../theme/ThemeContext";
 import { useVerseSheet } from "../components/VerseSheetContext";
 import { KJV_DATA } from "../data/kjvFull";
-import { KEYS, getJSON } from "../storage/storage";
+import { KEYS, getJSON, onLocalWrite } from "../storage/storage";
+import { HIGHLIGHT_COLORS } from "../theme/themes";
+
+function highlightColorValue(colorId) {
+  return (HIGHLIGHT_COLORS.find(c => c.id === colorId) || HIGHLIGHT_COLORS[0]).color;
+}
 
 // Minimum horizontal drag (px) before a swipe counts as a chapter change —
 // high enough that a slightly-diagonal scroll attempt doesn't accidentally
@@ -38,6 +43,15 @@ export default function BibleScreen({ route }) {
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
+
+  // The verse popup (VerseSheetContext) keeps its own copy of highlights/
+  // bookmarks — without this, toggling one there never shows up here,
+  // since each is just a separate useState over the same AsyncStorage key.
+  useEffect(() => {
+    return onLocalWrite((key) => {
+      if (key === KEYS.highlights || key === KEYS.bookmarks) refresh();
+    });
+  }, [refresh]);
 
   useEffect(() => {
     if (route.params?.book && route.params?.chapter) {
@@ -92,7 +106,8 @@ export default function BibleScreen({ route }) {
     setResults(found);
   };
 
-  const isHi = (ref) => highlights.some(h => h.ref === ref);
+  const highlightFor = (ref) => highlights.find(h => h.ref === ref);
+  const isBookmarked = (ref) => bookmarks.some(b => b.ref === ref);
 
   const filteredBooks = useMemo(() => {
     const q = bookQuery.trim().toLowerCase();
@@ -136,49 +151,29 @@ export default function BibleScreen({ route }) {
         }
         renderItem={({ item, index }) => {
           const ref = `${book} ${chapter}:${index + 1}`;
+          const hi = highlightFor(ref);
+          const bookmarked = isBookmarked(ref);
           return (
             <Pressable
-              style={[s.verseRow, isHi(ref) && s.verseRowHi]}
+              style={[s.verseRow, hi && { backgroundColor: highlightColorValue(hi.color) }]}
               onPress={() => openVerseSheet(ref, item)}
             >
-              <Text style={s.verseNum}>{index + 1} </Text>
-              <Text style={s.verseText}>{item}</Text>
+              {bookmarked && <View style={s.bookmarkTab} />}
+              <Text style={[s.verseNum, hi && s.verseNumOnHighlight]}>{index + 1} </Text>
+              <Text style={[s.verseText, hi && s.verseTextOnHighlight]}>{item}</Text>
             </Pressable>
           );
         }}
         ListFooterComponent={
-          <View>
-            <View style={s.navRow}>
-              <Pressable style={s.navBtn} onPress={goPrev}>
-                <Ionicons name="chevron-back" size={13} color={colors.text} />
-                <Text style={s.navBtnText}>Previous Chapter</Text>
-              </Pressable>
-              <Pressable style={s.navBtn} onPress={goNext}>
-                <Text style={s.navBtnText}>Next Chapter</Text>
-                <Ionicons name="chevron-forward" size={13} color={colors.text} />
-              </Pressable>
-            </View>
-
-            <View style={s.compactCard}>
-              <Text style={s.badge}>YOUR HIGHLIGHTS & BOOKMARKS</Text>
-              {highlights.length === 0 && bookmarks.length === 0 && (
-                <Text style={s.mutedText}>No highlights or bookmarks yet — tap any verse while reading to save one.</Text>
-              )}
-              {bookmarks.map(b => (
-                <Pressable key={"bm" + b.ref} style={s.compactRow} onPress={() => openVerseSheet(b.ref, b.text)}>
-                  <Ionicons name="bookmark" size={13} color={colors.accent} />
-                  <Text style={s.compactRowRef} numberOfLines={1}>{b.ref}</Text>
-                  <Text style={s.compactRowText} numberOfLines={1}>{b.text}</Text>
-                </Pressable>
-              ))}
-              {highlights.map(h => (
-                <Pressable key={"hl" + h.ref} style={s.compactRow} onPress={() => openVerseSheet(h.ref, h.text)}>
-                  <Ionicons name="color-wand" size={13} color={colors.accent} />
-                  <Text style={s.compactRowRef} numberOfLines={1}>{h.ref}</Text>
-                  <Text style={s.compactRowText} numberOfLines={1}>{h.text}</Text>
-                </Pressable>
-              ))}
-            </View>
+          <View style={s.navRow}>
+            <Pressable style={s.navBtn} onPress={goPrev}>
+              <Ionicons name="chevron-back" size={13} color={colors.text} />
+              <Text style={s.navBtnText}>Previous Chapter</Text>
+            </Pressable>
+            <Pressable style={s.navBtn} onPress={goNext}>
+              <Text style={s.navBtnText}>Next Chapter</Text>
+              <Ionicons name="chevron-forward" size={13} color={colors.text} />
+            </Pressable>
           </View>
         }
       />
@@ -290,18 +285,18 @@ function makeStyles(c, textScale) {
     pillText: { color: c.text, fontSize: 13 * textScale },
     arrowBtn: { paddingVertical: 8, paddingHorizontal: 10 },
     chapterTitle: { color: c.text, fontSize: 22 * textScale, fontWeight: "700", fontStyle: "italic", marginBottom: 12 },
-    verseRow: { flexDirection: "row", paddingVertical: 4, borderRadius: 6 },
-    verseRowHi: { backgroundColor: c.bgSunken },
+    verseRow: { flexDirection: "row", alignItems: "center", paddingVertical: 4, borderRadius: 6 },
+    bookmarkTab: { width: 4, height: 20, borderRadius: 2, backgroundColor: "#D64545", marginRight: 8 },
     verseNum: { color: c.accent, fontWeight: "700", fontSize: 11 * textScale },
     verseText: { flex: 1, color: c.text, fontSize: 16 * textScale, lineHeight: 25 * textScale },
+    // Highlight colors are always light/pastel regardless of theme, so
+    // highlighted text needs a fixed dark color — c.text/c.accent can be
+    // light-on-light (and unreadable) in dark mode otherwise.
+    verseNumOnHighlight: { color: "#2a2a2a" },
+    verseTextOnHighlight: { color: "#2a2a2a" },
     navRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 16, marginBottom: 16 },
     navBtn: { flexDirection: "row", alignItems: "center", gap: 4, borderWidth: 1, borderColor: c.border, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 12 },
     navBtnText: { color: c.text, fontSize: 12 * textScale },
-    compactCard: { backgroundColor: c.bgElevated, borderRadius: 14, borderWidth: 1, borderColor: c.border, padding: 12, marginBottom: 16 },
-    badge: { color: c.textMuted, fontSize: 11 * textScale, fontWeight: "700", letterSpacing: 0.6, marginBottom: 6 },
-    compactRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6, borderTopWidth: 1, borderTopColor: c.border },
-    compactRowRef: { color: c.accent, fontWeight: "700", fontSize: 11 * textScale, maxWidth: "42%" },
-    compactRowText: { flex: 1, color: c.textMuted, fontSize: 12 * textScale },
     searchRow: { flexDirection: "row", gap: 8 },
     input: { flex: 1, borderWidth: 1, borderColor: c.border, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14, color: c.text, backgroundColor: c.bg },
     primaryBtn: { backgroundColor: c.accent, borderRadius: 999, paddingVertical: 10, paddingHorizontal: 14, justifyContent: "center" },

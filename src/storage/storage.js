@@ -10,6 +10,20 @@ import { KEYS } from "./keys";
 
 export { KEYS };
 
+// Lets any screen know when a key it cares about changed locally — needed
+// because screens that read a key into their own local state (e.g.
+// BibleScreen reading highlights/bookmarks) otherwise go stale the moment
+// another component (e.g. the verse popup) writes that same key, since
+// each copy of the data lives in its own useState.
+const localWriteListeners = new Set();
+export function onLocalWrite(callback) {
+  localWriteListeners.add(callback);
+  return () => localWriteListeners.delete(callback);
+}
+function notifyLocalWrite(key) {
+  localWriteListeners.forEach(cb => cb(key));
+}
+
 export async function getJSON(key, fallback) {
   try {
     const raw = await AsyncStorage.getItem(key);
@@ -23,6 +37,7 @@ export async function setJSON(key, value) {
   try {
     await AsyncStorage.setItem(key, JSON.stringify(value));
     syncPushJSON(key, value);
+    notifyLocalWrite(key);
   } catch (e) {
     // best-effort; local storage failures shouldn't crash the app
   }
