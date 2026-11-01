@@ -1,7 +1,7 @@
 -- Rebuke it: Bible Chat — Supabase schema
 --
 -- Run this once in your Supabase project's SQL Editor
--- (https://supabase.com/dashboard/project/rivaydnusrzogaibswct/sql/new).
+-- (https://supabase.com/dashboard/project/tihwfqsthuyxhcdnjsul/sql/new).
 -- Safe to re-run: every statement is idempotent (`if not exists` / `create or replace`).
 --
 -- Seven tables, one per synced data type in the app. Every table is scoped to

@@ -40,4 +40,4 @@ id = "49acc10bd1e14d2389e47e349b9c4c9e"
 # service role key is a real secret — NEVER put it in this file:
 #   npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY   # Project Settings > API > service_role, in the Supabase dashboard
 [vars]
-SUPABASE_URL = "https://rivaydnusrzogaibswct.supabase.co"
+SUPABASE_URL = "https://tihwfqsthuyxhcdnjsul.supabase.co"
